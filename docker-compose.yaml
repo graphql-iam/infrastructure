@@ -1,0 +1,50 @@
+version: '3.8'
+
+services:
+  postgres:
+    image: postgres:15
+    container_name: postgres
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: pass
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./db/init-db:/docker-entrypoint-initdb.d
+
+  liquibase:
+    image: liquibase/liquibase:latest
+    container_name: liquibase
+    environment:
+      - LIQUIBASE_COMMAND_URL=jdbc:postgresql://postgres:5432/graphql_iam_db
+      - LIQUIBASE_COMMAND_USERNAME=graphql_iam_user
+      - LIQUIBASE_COMMAND_PASSWORD=graphql_iam_pass
+      - LIQUIBASE_COMMAND_CHANGELOG_FILE=changelog/db.changelog-master.yaml
+    volumes:
+      - ./db/changelog:/liquibase/changelog
+    depends_on:
+      - postgres
+    command:
+      - update
+
+#  keycloak:
+#    image: quay.io/keycloak/keycloak:22.0.1
+#    container_name: keycloak
+#    environment:
+#      DB_VENDOR: postgres
+#      DB_ADDR: postgres
+#      DB_DATABASE: keycloak_db
+#      DB_USER: keycloak_user
+#      DB_PASSWORD: keycloak_pass
+#      KEYCLOAK_USER: admin
+#      KEYCLOAK_PASSWORD: admin
+#    ports:
+#      - "8083:8080"
+#    depends_on:
+#      - postgres
+#    command:
+#      - start-dev
+
+volumes:
+  postgres_data:
